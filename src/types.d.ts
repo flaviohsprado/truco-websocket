@@ -10,6 +10,8 @@ export type Room = {
    private: boolean | null;
    createdAt: Date | null;
    updatedAt: Date | null;
+   players: RoomPlayer[];
+   playerAlreadyInRoom?: boolean;
 };
 
 export type RoomPlayer = {
@@ -50,6 +52,5 @@ export type UpdatePlayerStatus = {
 
 export type RoomData = {
    room: Room;
-   players: RoomPlayer[];
    currentPlayers: number;
 };

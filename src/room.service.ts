@@ -55,10 +55,11 @@ export class RoomService {
             })
             .eq("id", roomId);
 
+         const room = await this.getRoomData(roomId, userId);
+
          return {
-            room: roomData as Room,
-            players: roomPlayerData as RoomPlayer[],
-            currentPlayers: currentPlayersInRoom,
+            room,
+            currentPlayers: room.currentPlayers ?? 0,
          };
       } catch (error) {
          throw new Error("Error joining room", { cause: error });
@@ -104,10 +105,11 @@ export class RoomService {
             .update({ currentPlayers: (room.currentPlayers ?? 0) + 1 })
             .eq("id", room.id);
 
+         const roomData = await this.getRoomData(room.id, userId);
+
          return {
-            room: room as Room,
-            players: roomPlayers as RoomPlayer[],
-            currentPlayers: room.currentPlayers ?? 0,
+            room: roomData,
+            currentPlayers: roomData.currentPlayers ?? 0,
          };
       } catch (error) {
          throw new Error("Error joining room by code", { cause: error });
@@ -138,10 +140,11 @@ export class RoomService {
             .select("*")
             .eq("roomId", roomId);
 
+         const room = await this.getRoomData(roomId, userId);
+
          return {
-            room: roomData as Room,
-            players: roomPlayers as RoomPlayer[],
-            currentPlayers: roomData?.currentPlayers ?? 0,
+            room,
+            currentPlayers: room.currentPlayers ?? 0,
          };
       } catch (error) {
          throw new Error("Error leaving room", { cause: error });
@@ -167,12 +170,36 @@ export class RoomService {
          .eq("id", roomId)
          .single();
 
-      const currentPlayersInRoom = roomData?.currentPlayers || 0;
+      const room = await this.getRoomData(roomId, userId);
 
       return {
-         room: roomData as Room,
-         players: roomPlayerData as unknown as RoomPlayer[],
-         currentPlayers: currentPlayersInRoom,
+         room,
+         currentPlayers: room.currentPlayers ?? 0,
+      };
+   }
+
+   private async getRoomData(roomId: string, userId: string): Promise<Room> {
+      const [room, playerAlreadyInRoom, playersInRoom] = await Promise.all([
+         this.supabase.from("rooms").select("*").eq("id", roomId).single(),
+         this.supabase
+            .from("room_players")
+            .select("*")
+            .eq("roomId", roomId)
+            .eq("userId", userId)
+            .single(),
+         this.supabase.from("room_players").select("*").eq("roomId", roomId),
+      ]);
+
+      if (!room) throw new Error("Room not found");
+
+      const { data: roomData } = room;
+      const { data: playersInRoomData } = playersInRoom;
+      const { data: playerAlreadyInRoomData } = playerAlreadyInRoom;
+
+      return {
+         ...roomData,
+         playerAlreadyInRoom: !!playerAlreadyInRoomData,
+         players: playersInRoomData as RoomPlayer[],
       };
    }
 }

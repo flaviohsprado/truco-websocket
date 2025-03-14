@@ -84,6 +84,10 @@ io.on("connection", (socket) => {
          io.to(room.id).emit("room-data", room);
       }
    );
+
+   socket.on("disconnect", () => {
+      console.log("Client disconnected:", socket.id);
+   });
 });
 
 app.get("/", (c) => c.text("WebSocket server running"));

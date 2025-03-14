@@ -1,0 +1,20 @@
+{
+   "name": "truco-websocket",
+   "type": "module",
+   "scripts": {
+      "dev": "tsx watch src/index.ts",
+      "start": "tsx ./src/index.ts"
+   },
+   "dependencies": {
+      "@hono/node-server": "^1.13.8",
+      "@supabase/supabase-js": "^2.49.1",
+      "dotenv": "^16.4.7",
+      "hono": "^4.7.4",
+      "socket.io": "^4.8.1"
+   },
+   "devDependencies": {
+      "@types/node": "^20.11.17",
+      "tsx": "^4.7.1"
+   },
+   "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
+}

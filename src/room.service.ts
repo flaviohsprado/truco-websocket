@@ -6,14 +6,14 @@ export class RoomService {
 
    public async joinRoom(roomId: string, userId: string): Promise<RoomData> {
       try {
-         const existingPlayer = await this.supabase
+         const { data: existingPlayer } = await this.supabase
             .from("room_players")
             .select("*")
             .eq("roomId", roomId)
             .eq("userId", userId)
-            .single();
+            .single<RoomPlayer>();
 
-         if (existingPlayer?.data) {
+         if (existingPlayer) {
             throw new Error("You are already in this room");
          }
 
@@ -84,11 +84,10 @@ export class RoomService {
             throw new Error("Room is full");
          }
 
-         const { data: roomPlayers, error: roomPlayersError } =
-            await this.supabase
-               .from("room_players")
-               .select("*")
-               .eq("roomId", room.id);
+         const { data: roomPlayers } = await this.supabase
+            .from("room_players")
+            .select("*")
+            .eq("roomId", room.id);
 
          // Check if player is already in the room - safely handle undefined
          if (
@@ -171,8 +170,8 @@ export class RoomService {
       const currentPlayersInRoom = roomData?.currentPlayers || 0;
 
       return {
-         ...roomData,
-         players: roomPlayerData,
+         room: roomData as Room,
+         players: roomPlayerData as unknown as RoomPlayer[],
          currentPlayers: currentPlayersInRoom,
       };
    }

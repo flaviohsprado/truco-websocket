@@ -37,51 +37,81 @@ io.on("connection", (socket) => {
 
    socket.on("join-room", async ({ roomId, userId }: JoinRoom) => {
       console.log(`Client ${userId} joining room:`, roomId);
+      activeRoom = roomId;
 
-      const { room } = await roomService.joinRoom(roomId, userId);
+      try {
+         const response = await roomService.joinRoom(roomId, userId);
 
-      activeRoom = room.id;
+         socket.join(response.room.id);
 
-      socket.join(room.id);
-
-      io.to(room.id).emit("user-joined", { socketId: socket.id, userId });
-      io.to(room.id).emit("room-data", room);
+         io.to(response.room.id).emit("user-joined", {
+            socketId: socket.id,
+            userId,
+         });
+         io.to(response.room.id).emit("room-data", response);
+      } catch (error) {
+         console.error("Error joining room:", error);
+         socket.emit("room-join-error", { message: "Failed to join room" });
+      }
    });
 
    socket.on("join-by-code", async ({ code, userId }: JoinByCode) => {
       console.log(`Client ${userId} joining room by code:`, code);
 
-      const { room } = await roomService.joinByCode(code, userId);
+      try {
+         const response = await roomService.joinByCode(code, userId);
 
-      activeRoom = room.id;
+         activeRoom = response.room.id;
+         socket.join(response.room.id);
 
-      socket.join(room.id);
-
-      io.to(room.id).emit("user-joined", { socketId: socket.id, userId });
-      io.to(room.id).emit("room-data", room);
+         io.to(response.room.id).emit("user-joined", {
+            socketId: socket.id,
+            userId,
+         });
+         io.to(response.room.id).emit("room-data", response);
+      } catch (error) {
+         console.error("Error joining room by code:", error);
+         socket.emit("room-join-error", {
+            message: "Failed to join room by code",
+         });
+      }
    });
 
    socket.on("leave-room", async ({ userId }: LeaveRoom) => {
       if (activeRoom) {
-         const { room } = await roomService.leaveRoom(activeRoom, userId);
+         try {
+            const response = await roomService.leaveRoom(activeRoom, userId);
 
-         socket.leave(activeRoom);
+            socket.leave(activeRoom);
 
-         io.to(activeRoom).emit("user-left", { socketId: socket.id });
-         io.to(activeRoom).emit("room-data", room);
+            io.to(activeRoom).emit("user-left", { socketId: socket.id });
+            io.to(activeRoom).emit("room-data", response);
+         } catch (error) {
+            console.error("Error leaving room:", error);
+            socket.emit("room-leave-error", {
+               message: "Failed to leave room",
+            });
+         }
       }
    });
 
    socket.on(
       "update-player-status",
       async ({ roomId, userId, isReady }: UpdatePlayerStatus) => {
-         const { room } = await roomService.updatePlayerStatus(
-            roomId,
-            userId,
-            isReady
-         );
+         try {
+            const response = await roomService.updatePlayerStatus(
+               roomId,
+               userId,
+               isReady
+            );
 
-         io.to(room.id).emit("room-data", room);
+            io.to(response.room.id).emit("room-data", response);
+         } catch (error) {
+            console.error("Error updating player status:", error);
+            socket.emit("room-update-error", {
+               message: "Failed to update player status",
+            });
+         }
       }
    );
 

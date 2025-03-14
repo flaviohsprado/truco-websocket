@@ -13,7 +13,7 @@ export class RoomService {
             .eq("userId", userId)
             .single();
 
-         if (existingPlayer) {
+         if (existingPlayer?.data) {
             throw new Error("You are already in this room");
          }
 

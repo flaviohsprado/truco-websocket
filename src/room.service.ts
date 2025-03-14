@@ -10,7 +10,8 @@ export class RoomService {
             .from("room_players")
             .select("*")
             .eq("roomId", roomId)
-            .eq("userId", userId);
+            .eq("userId", userId)
+            .single();
 
          if (existingPlayer) {
             throw new Error("You are already in this room");

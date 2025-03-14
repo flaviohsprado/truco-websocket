@@ -35,7 +35,7 @@ io.on("connection", (socket) => {
 
    let activeRoom: string | null = null;
 
-   socket.on("joinRoom", async ({ roomId, userId }: JoinRoom) => {
+   socket.on("join-room", async ({ roomId, userId }: JoinRoom) => {
       console.log(`Client ${userId} joining room:`, roomId);
 
       const { room } = await roomService.joinRoom(roomId, userId);
@@ -48,7 +48,7 @@ io.on("connection", (socket) => {
       io.to(room.id).emit("room-data", room);
    });
 
-   socket.on("joinByCode", async ({ code, userId }: JoinByCode) => {
+   socket.on("join-by-code", async ({ code, userId }: JoinByCode) => {
       console.log(`Client ${userId} joining room by code:`, code);
 
       const { room } = await roomService.joinByCode(code, userId);
@@ -61,7 +61,7 @@ io.on("connection", (socket) => {
       io.to(room.id).emit("room-data", room);
    });
 
-   socket.on("leaveRoom", async ({ userId }: LeaveRoom) => {
+   socket.on("leave-room", async ({ userId }: LeaveRoom) => {
       if (activeRoom) {
          const { room } = await roomService.leaveRoom(activeRoom, userId);
 
@@ -85,6 +85,8 @@ io.on("connection", (socket) => {
       }
    );
 });
+
+app.get("/", (c) => c.text("WebSocket server running"));
 
 const port = Number(process.env.PORT ?? 12000);
 // serve({

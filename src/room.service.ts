@@ -66,10 +66,10 @@ export class RoomService {
 
    public async joinByCode(code: string, userId: string): Promise<RoomData> {
       try {
-         const { data: room, error: roomError } = await this.supabase
+         const { data: room } = await this.supabase
             .from("rooms")
             .select("*")
-            .eq("code", code)
+            .eq("id", code)
             .single<Room>();
 
          if (!room) {

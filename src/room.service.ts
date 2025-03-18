@@ -14,7 +14,11 @@ export class RoomService {
             .single<RoomPlayer>();
 
          if (existingPlayer) {
-            throw new Error("You are already in this room");
+            const room = await this.getRoomData(roomId, userId);
+            return {
+               room,
+               currentPlayers: room.currentPlayers ?? 0,
+            };
          }
 
          // Get current number of players to determine team

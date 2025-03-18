@@ -28,7 +28,7 @@ export class RoomService {
          const team = (currentPlayersCount % 2) + 1;
 
          // Insert new player
-         const { data: roomPlayerData } = await this.supabase
+         await this.supabase
             .from("room_players")
             .insert({
                roomId: roomId,
@@ -135,11 +135,6 @@ export class RoomService {
             .update({ currentPlayers: roomData?.currentPlayers - 1 })
             .eq("id", roomId);
 
-         const { data: roomPlayers } = await this.supabase
-            .from("room_players")
-            .select("*")
-            .eq("roomId", roomId);
-
          const room = await this.getRoomData(roomId, userId);
 
          return {
@@ -156,19 +151,13 @@ export class RoomService {
       userId: string,
       isReady: boolean
    ): Promise<RoomData> {
-      const { data: roomPlayerData } = await this.supabase
+      await this.supabase
          .from("room_players")
          .update({
             isReady: isReady,
          })
          .eq("roomId", roomId)
          .eq("userId", userId);
-
-      const { data: roomData } = await this.supabase
-         .from("rooms")
-         .select("*")
-         .eq("id", roomId)
-         .single();
 
       const room = await this.getRoomData(roomId, userId);
 

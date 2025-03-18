@@ -29,26 +29,31 @@ const io = new Server(httpServer, {
    path: "/socket.io",
 });
 
+// Create a single instance of RoomService to be shared across all connections
+const roomService = new RoomService(supabase);
+
 io.on("connection", (socket) => {
    console.log("Client connected:", socket.id);
-   const roomService = new RoomService(supabase);
 
-   let activeRoom: string | null = null;
+   // Track per-socket room info
+   let activeRoomId: string | null = null;
 
    socket.on("join-room", async ({ roomId, userId }: JoinRoom) => {
-      console.log(`Client ${userId} joining room:`, roomId);
-      activeRoom = roomId;
+      console.log(`User ${userId} joining room:`, roomId);
+      activeRoomId = roomId;
 
       try {
          const response = await roomService.joinRoom(roomId, userId);
 
-         socket.join(response.room.id);
+         // Join the socket.io room
+         socket.join(roomId);
 
-         io.to(response.room.id).emit("user-joined", {
+         // Broadcast to everyone in the room
+         io.to(roomId).emit("user-joined", {
             socketId: socket.id,
             userId,
          });
-         io.to(response.room.id).emit("room-data", response);
+         io.to(roomId).emit("room-data", response);
       } catch (error) {
          console.error("Error joining room:", error);
          socket.emit("room-join-error", { message: "Failed to join room" });
@@ -61,9 +66,11 @@ io.on("connection", (socket) => {
       try {
          const response = await roomService.joinByCode(code, userId);
 
-         activeRoom = response.room.id;
+         activeRoomId = response.room.id;
+         // Join the socket.io room
          socket.join(response.room.id);
 
+         // Broadcast to everyone in the room
          io.to(response.room.id).emit("user-joined", {
             socketId: socket.id,
             userId,
@@ -78,14 +85,14 @@ io.on("connection", (socket) => {
    });
 
    socket.on("leave-room", async ({ userId }: LeaveRoom) => {
-      if (activeRoom) {
+      if (activeRoomId) {
          try {
-            const response = await roomService.leaveRoom(activeRoom, userId);
+            const response = await roomService.leaveRoom(activeRoomId, userId);
 
-            socket.leave(activeRoom);
+            socket.leave(activeRoomId);
 
-            io.to(activeRoom).emit("user-left", { socketId: socket.id });
-            io.to(activeRoom).emit("room-data", response);
+            io.to(activeRoomId).emit("user-left", { socketId: socket.id });
+            io.to(activeRoomId).emit("room-data", response);
          } catch (error) {
             console.error("Error leaving room:", error);
             socket.emit("room-leave-error", {
